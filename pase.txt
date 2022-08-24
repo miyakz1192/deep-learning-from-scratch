@@ -4,7 +4,7 @@
 2: BatchNormalizationの計算グラフの導出(P189)
 3: Convolutionクラスのbackwardの理解(微分導出) ※Affineレイヤの逆伝搬の導出の知識が必要とのこと
 4: im2col/col2imの実装の理解 
-5: Poolingレイヤのbackwardに理解(これはすぐできるかな？)
+5: Poolingレイヤのbackwardに理解(ヒントがテキストにも無いので自力で情報を探す必要あり。)
 
    日付　　　　　　どこまで進んだか（読みページ）　実機(ページ)
 2022-08-02(Tue) :    113                              93
