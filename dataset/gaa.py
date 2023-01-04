@@ -11,10 +11,14 @@ from tensorflow.keras.utils import array_to_img
 
 
 class GAADataLoader:
-    TRAIN_TXT_PATH="./GAA_DATA/data_set/ImageSets/Main/train.txt"
-    VALID_TXT_PATH="./GAA_DATA/data_set/ImageSets/Main/val.txt"
-    IMAGE_PATH ="./GAA_DATA/data_set/JPEGImages/"
-    SAVE_PATH ="./GAA_DATA/gaa_data.pkl"
+    TRAIN_TXT_PATH = "../dataset/GAA_DATA/data_set/ImageSets/Main/train.txt"
+    VALID_TXT_PATH = "../dataset/GAA_DATA/data_set/ImageSets/Main/val.txt"
+    IMAGE_PATH     = "../dataset/GAA_DATA/data_set/JPEGImages/"
+    SAVE_PATH      = "../dataset/GAA_DATA/gaa_data.pkl"
+#    TRAIN_TXT_PATH = "./GAA_DATA/data_set/ImageSets/Main/train.txt"
+#    VALID_TXT_PATH = "./GAA_DATA/data_set/ImageSets/Main/val.txt"
+#    IMAGE_PATH     = "./GAA_DATA/data_set/JPEGImages/"
+#    SAVE_PATH      = "./GAA_DATA/gaa_data.pkl"
     CLOSE_LABEL = 1000
 
     TYPE_TRAIN = "train"
@@ -28,10 +32,10 @@ class GAADataLoader:
         self.db[self.TYPE_TRAIN] = self.train_db
         self.db[self.TYPE_VALID] = self.valid_db
 
-        self.x_train = []
-        self.t_train = []
-        self.x_test  = []
-        self.t_test  = []
+        self.x_train = [] 
+        self.t_train = [] 
+        self.x_test  = [] 
+        self.t_test  = [] 
         
         self.data_set = []
 
@@ -102,6 +106,21 @@ class GAADataLoader:
                 self.x_test.append(data)
                 self.t_test.append(label)
 
+        print("TRACE: self.x_train len=%d" % (len(self.x_train)))
+        print("TRACE: self.t_train len=%d" % (len(self.t_train)))
+        print("TRACE: self.x_test  len=%d" % (len(self.x_test)))
+        print("TRACE: self.t_test  len=%d" % (len(self.t_test)))
+
+        self.x_train = np.stack(self.x_train)
+        self.t_train = np.stack(self.t_train)
+        self.x_test  = np.stack(self.x_test)
+        self.t_test  = np.stack(self.t_test) 
+
+        print("TRACE: self.x_train shape=%s" % (str(self.x_train.shape)))
+        print("TRACE: self.t_train shape=%s" % (str(self.t_train.shape)))
+        print("TRACE: self.x_test  shape=%s" % (str(self.x_test.shape)))
+        print("TRACE: self.t_test  shape=%s" % (str(self.t_test.shape)))
+
         with open(self.SAVE_PATH, "wb") as f:
             self.data_set = [self.x_train, self.t_train, self.x_test, self.t_test]
             pickle.dump(self.data_set,f,-1)
@@ -159,11 +178,46 @@ def gaa_data_load_main():
     end = time.time()
     
     print("INFO: elapsed time = %d sec" % (end-start))
+    print("x_train shape = %s" % str(dl.x_train.shape))
+    print("t_train shape = %s" % str(dl.t_train.shape))
+    print("x_test shape = %s" % str(dl.x_test.shape))
+    print("t_test shape = %s" % str(dl.t_test.shape))
 #    import pdb
 #    pdb.set_trace()
 
 
 
 if __name__ == "__main__":
-    #gaa_data_init_main()
+    #NOTE: this script run under the some directory, like...
+    #a@dataaug:~/deep-learning-from-scratch/ch09$ python3 ../dataset/gaa.py 
+
+    gaa_data_init_main()
     gaa_data_load_main()
+
+
+#(Pdb) p self.x_train[1][0].shape
+#(64, 64)
+#(Pdb) p self.x_train[1][508939].shape
+#*** IndexError: index 508939 is out of bounds for axis 0 with size 3
+#(Pdb) p self.x_train[1][508939]
+#*** IndexError: index 508939 is out of bounds for axis 0 with size 3
+#(Pdb) p self.x_train[0][508939]
+#*** IndexError: index 508939 is out of bounds for axis 0 with size 3
+#(Pdb) p np.concatenate(self.x_train)
+#*** ValueError: all the input array dimensions for the concatenation axis must match exactly, but along dimension 1, the array at index 0 has size 64 and the array at index 508939 has size 400
+#(Pdb) p self.x_train[1][508939]
+#*** IndexError: index 508939 is out of bounds for axis 0 with size 3
+#(Pdb) p self.x_train[1][0]
+#array([[255, 255, 255, ..., 255, 255, 255],
+#       [255, 255, 255, ..., 255, 255, 255],
+#       [255, 255, 255, ..., 255, 255, 255],
+#       ...,
+#       [255, 255, 255, ..., 255, 255, 255],
+#       [255, 255, 255, ..., 255, 255, 255],
+#       [255, 255, 255, ..., 255, 255, 255]], dtype=uint8)
+#(Pdb) p self.x_train[1][0].shape
+#(64, 64)
+#(Pdb) p self.x_train[508939][0].shape
+#(400, 400)
+#(Pdb) 
+#

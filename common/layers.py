@@ -3,10 +3,23 @@ import numpy as np
 from common.functions import *
 from common.util import im2col, col2im
 
+#is_show_print_name_at_forward = False
+is_show_print_name_at_forward = True
+
+
+def print_name_at_forward(func):
+    def wrapper(self, *args, **kwargs):
+        if is_show_print_name_at_forward is True:
+            print("INFO: forward %s" % self.name, flush=True)
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
 
 class Relu:
-    def __init__(self):
+    def __init__(self,name=None):
         self.mask = None
+        self.name = name
 
     def forward(self, x):
         self.mask = (x <= 0)
@@ -23,8 +36,9 @@ class Relu:
 
 
 class Sigmoid:
-    def __init__(self):
+    def __init__(self,name=None):
         self.out = None
+        self.name = name
 
     def forward(self, x):
         out = sigmoid(x)
@@ -38,7 +52,7 @@ class Sigmoid:
 
 
 class Affine:
-    def __init__(self, W, b):
+    def __init__(self, W, b, name=None):
         self.W =W
         self.b = b
         
@@ -47,13 +61,17 @@ class Affine:
         # 重み・バイアスパラメータの微分
         self.dW = None
         self.db = None
+        self.name = name
 
+    @print_name_at_forward
     def forward(self, x):
         # テンソル対応
         self.original_x_shape = x.shape
         x = x.reshape(x.shape[0], -1)
         self.x = x
 
+#        import pdb
+#        pdb.set_trace()
         out = np.dot(self.x, self.W) + self.b
 
         return out
@@ -68,11 +86,13 @@ class Affine:
 
 
 class SoftmaxWithLoss:
-    def __init__(self):
+    def __init__(self, name=None):
         self.loss = None
         self.y = None # softmaxの出力
         self.t = None # 教師データ
+        self.name = name
 
+    @print_name_at_forward
     def forward(self, x, t):
         self.t = t
         self.y = softmax(x)
@@ -96,10 +116,12 @@ class Dropout:
     """
     http://arxiv.org/abs/1207.0580
     """
-    def __init__(self, dropout_ratio=0.5):
+    def __init__(self, dropout_ratio=0.5, name=None):
         self.dropout_ratio = dropout_ratio
         self.mask = None
+        self.name = name
 
+    @print_name_at_forward
     def forward(self, x, train_flg=True):
         if train_flg:
             self.mask = np.random.rand(*x.shape) > self.dropout_ratio
@@ -115,7 +137,7 @@ class BatchNormalization:
     """
     http://arxiv.org/abs/1502.03167
     """
-    def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
+    def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None, name=None):
         self.gamma = gamma
         self.beta = beta
         self.momentum = momentum
@@ -131,7 +153,9 @@ class BatchNormalization:
         self.std = None
         self.dgamma = None
         self.dbeta = None
+        self.name = name
 
+    @print_name_at_forward
     def forward(self, x, train_flg=True):
         self.input_shape = x.shape
         if x.ndim != 2:
@@ -196,11 +220,12 @@ class BatchNormalization:
 
 
 class Convolution:
-    def __init__(self, W, b, stride=1, pad=0):
+    def __init__(self, W, b, stride=1, pad=0, name=None):
         self.W = W
         self.b = b
         self.stride = stride
         self.pad = pad
+        self.name = name
         
         # 中間データ（backward時に使用）
         self.x = None   
@@ -211,6 +236,7 @@ class Convolution:
         self.dW = None
         self.db = None
 
+    @print_name_at_forward
     def forward(self, x):
         FN, C, FH, FW = self.W.shape
         N, C, H, W = x.shape
@@ -244,7 +270,7 @@ class Convolution:
 
 
 class Pooling:
-    def __init__(self, pool_h, pool_w, stride=2, pad=0):
+    def __init__(self, pool_h, pool_w, stride=2, pad=0, name=None):
         self.pool_h = pool_h
         self.pool_w = pool_w
         self.stride = stride
@@ -252,7 +278,9 @@ class Pooling:
         
         self.x = None
         self.arg_max = None
+        self.name = name
 
+    @print_name_at_forward
     def forward(self, x):
         N, C, H, W = x.shape
         out_h = int(1 + (H - self.pool_h) / self.stride)
