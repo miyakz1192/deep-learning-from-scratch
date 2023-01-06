@@ -13,6 +13,7 @@ print(os.getcwd())
 #(x_train, t_train), (x_test, t_test) = load_mnist(flatten=False)
 (x_train, t_train), (x_test, t_test) = GAADataLoader().load_gaa_data()
 
+#os.environ["OPENBLAS_NUM_THREADS"] = "64"
 
 network = DeepConvNet(input_dim=(3,64,64),output_size=1001) #ja_chars and closew 
 trainer = Trainer(network, x_train, t_train, x_test, t_test,
