@@ -3,6 +3,18 @@ import sys, os
 sys.path.append(os.pardir)  # 親ディレクトリのファイルをインポートするための設定
 import numpy as np
 from common.optimizer import *
+import time
+import signal
+
+stop_flag = False
+
+def handler(signum, frame):
+    global stop_flag
+    print(f'called SIGUSR1 quitting this program (signum={signum})')
+    stop_flag = True
+
+# signal.SIGUSR1のシグナルハンドラを登録
+signal.signal(signal.SIGUSR1, handler)
 
 class Trainer:
     """ニューラルネットの訓練を行うクラス
@@ -36,6 +48,10 @@ class Trainer:
         self.train_acc_list = []
         self.test_acc_list = []
 
+        print("INFO: train_size     = %d" % (self.train_size))
+        print("INFO: iter_per_epoch = %d" % (self.iter_per_epoch))
+        print("INFO: max_iter       = %d" % (self.max_iter))
+
     def train_step(self):
         batch_mask = np.random.choice(self.train_size, self.batch_size)
         x_batch = self.x_train[batch_mask]
@@ -43,12 +59,16 @@ class Trainer:
         
         grads = self.network.gradient(x_batch, t_batch)
         self.optimizer.update(self.network.params, grads)
-        
+       
+        e_start = time.time()
         loss = self.network.loss(x_batch, t_batch)
+        e_end   = time.time()
         self.train_loss_list.append(loss)
-        if self.verbose: print("train loss:" + str(loss),flush=True)
+
+        loss_elasped_time = int(e_end - e_start)
+        if self.verbose: print("epoch=%d, iter=%d/%d, iter_per_epoch=%d, elasped_time=%d train loss:%s" % (self.current_epoch, self.current_iter, self.max_iter, self.iter_per_epoch, loss_elasped_time, str(loss)),flush=True)
         
-        if self.current_iter % self.iter_per_epoch == 0:
+        if self.current_iter != 0 and self.current_iter % self.iter_per_epoch == 0:
             self.current_epoch += 1
             
             x_train_sample, t_train_sample = self.x_train, self.t_train
@@ -67,12 +87,18 @@ class Trainer:
         self.current_iter += 1
 
     def train(self):
+        global stop_flag
+
         for i in range(self.max_iter):
             self.train_step()
+            print(f'stop flag = {stop_flag}')
+            if stop_flag is True:
+                print(f'stop flag = True, break')
+                break
 
-        test_acc = self.network.accuracy(self.x_test, self.t_test)
+        #test_acc = self.network.accuracy(self.x_test, self.t_test)
 
-        if self.verbose:
-            print("=============== Final Test Accuracy ===============",flush=True)
-            print("test acc:" + str(test_acc),flush=True)
+        #if self.verbose:
+        #    print("=============== Final Test Accuracy ===============",flush=True)
+        #    print("test acc:" + str(test_acc),flush=True)
 
